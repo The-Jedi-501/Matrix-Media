@@ -240,14 +240,15 @@ while True:
                 if result["thumbnail_bytes"]: #since new song new art, note if same album diff song would visuall look same but still happens but also says if there is a real thumbnail i can grab 
                     
                     canvas = build_matrix_image(result["thumbnail_bytes"]) # build my canvas by taking the raw image we are getting and send to build to resize and adjust 
-                    
-                    canvas = draw_status_icon(canvas, result["playback_status"] == 4)
+                #NEXT LINE IS PAUSE PLAY REMOVING SINCE CAUSING BUGGS 
+                    #canvas = draw_status_icon(canvas, result["playback_status"] == 4)
                     
 #to see the image in termanal for preview uncomment next line 
                     #canvas.show()  # temporary stand-in for the real matrix --- Note EVERY SINGLE NEW SONG OR MEDIA PLAY IS ANOTHER WINDOW SO LATER ON GET RID OF 
                     
                 # TESTING - time in terms of why its takign a long time to get images to display on matrix - keep func remove rest later on - the idea was if the eqution we know is giving us values close or not that being resolution x 10 (10 becasue its the rate uart reads 10 bits per byte or bits per frame) / baud rate = time in my case .53 seconds were getting .57-.58 so not noticable 
                     send_start = time.time()
+                #NEXT LINE IS PAUSE PLAY REMOVING SINCE CAUSING BUGGS - PART 2 OF PAUS EPLASE 
                     send_image_to_matrix(canvas) # callin a function to say im done with this you are all good 
                     send_end = time.time()
                     print(f"[SPAN 1] send_image_to_matrix took {send_end - send_start:.3f}s")
@@ -259,7 +260,8 @@ while True:
                 last_playback_status = result["playback_status"]
                 if result["thumbnail_bytes"]:
                     canvas = build_matrix_image(result["thumbnail_bytes"])
-                    canvas = draw_status_icon(canvas, result["playback_status"] == 4)
+                    #NEXT LINE IS PAUSE PLAY REMOVING SINCE CAUSING BUGGS - PART 2 OF PAUS EPLASE 
+                    #canvas = draw_status_icon(canvas, result["playback_status"] == 4)
                     send_image_to_matrix(canvas)
 
     except Exception as e: #exception is hey we couldnt get the infoarmtion in the form of the media info so print the error to terminal --- if error store into 'e varibale '

@@ -182,6 +182,17 @@ def send_position_to_LCD(position_seconds, end_seconds, is_playing): #taking two
     message = b"POS:" + f"{position_seconds}|{end_seconds}~{is_playing}".encode() + b"\n" #same idea as above but now were taking the position and end_time and putting into a string with a | in between to say hey this is the end of position and now end_time starts, the .encode() is saying take this string and turn it into bytes so we can send it over the wire, the \n is saying hey were done with this message now you can process it and do what you need to do with it 
     ser.write(message) #send the entire combined sequecne over the wire/us in one go
 
+# --- Sending the current time to ESP32 to be used on matrix ---
+def send_time_to_LCD(current_time): #taking one input for this function which is the current time of the song
+    if ser is None: #same as above if we cannot connect to esp32 then just skip this part 
+        print("No ESP32 connection — skipping LCD update.")
+        return
+
+    message = b"TIM:" + f"{current_time}".encode() + b"\n" #same idea as above but now were taking the current time and putting into a string, the .encode() is saying take this string and turn it into bytes so we can send it over the wire, the \n is saying hey were done with this message now you can process it and do what you need to do with it 
+    ser.write(message) #send the entire combined sequecne over the wire/us in one go
+    
+    
+    
 # --- Starting up --- 
 print("Spotify monitor started...")
 print("The format for what we see is: Title of piece, artist") #maybe for rn could add say a color to show better ie song name blue artist red just for sake of reading in terminal for things that dont naturally look right in termianl think a youtube video 
@@ -217,7 +228,7 @@ while True:
             print(f"Position: {real_position} / {result['end_time']}") #print the position of the song and how long it is in total
 
             #send_position_to_LCD(real_position, result["end_time"]) #calling the function to send the position to the LCD on the matrix --- wouldnt eher ebe two of this but its an if sayign if playback is 4 or just ==t treu 
-            
+        
             if result["playback_status"] == 4:
                 status = 1
             else:
@@ -225,6 +236,21 @@ while True:
             #before we send to lcd i want to have a way to track via a variable so if playing status is 1 
             send_position_to_LCD(position_seconds, end_seconds, status) 
             
+    #This is to demo the time featurre ie its XX:XX onto the matrix - note was build just as a string of numbners so i dont need to worry about spaces and : making it easier to send over the wire and then i can just have the esp32 code handle the formatting of it to make it look nice on the matrix 
+        
+            now = time.localtime() # Get the current local time
+            
+            hour_24 = int(time.strftime("%H", now))       # 0-23
+            minute = time.strftime("%M", now)             # "00"-"59", already 2 digits
+            ampm_flag = "0" if hour_24 < 12 else "1"       # 0 = AM, 1 = PM
+
+            hour_12 = time.strftime("%I", now)             # "01"-"12", 12-hour digits, already 2-digit padded - for esp coudl do a if valuie is less than 10 then remove 0 same logic as lcd 
+
+            current_time = f"{hour_12}{minute}{ampm_flag}"  # e.g. "0247" + "1" = "02471" → 5 digits total
+
+            print(f"Current Time: {current_time}")
+            send_time_to_LCD(current_time) # Send the current time to the LCD on the matrix
+
             if result["last_updated_position"] != last_update_time:
                 last_update_time = result["last_updated_position"] #Note the hash value is a tuple so we can compare the entire thing at once rather than each individual part
     
@@ -241,7 +267,7 @@ while True:
                     
                     canvas = build_matrix_image(result["thumbnail_bytes"]) # build my canvas by taking the raw image we are getting and send to build to resize and adjust 
                 #NEXT LINE IS PAUSE PLAY REMOVING SINCE CAUSING BUGGS 
-                    #canvas = draw_status_icon(canvas, result["playback_status"] == 4)
+                    canvas = draw_status_icon(canvas, result["playback_status"] == 4)
                     
 #to see the image in termanal for preview uncomment next line 
                     #canvas.show()  # temporary stand-in for the real matrix --- Note EVERY SINGLE NEW SONG OR MEDIA PLAY IS ANOTHER WINDOW SO LATER ON GET RID OF 
@@ -249,7 +275,7 @@ while True:
                 # TESTING - time in terms of why its takign a long time to get images to display on matrix - keep func remove rest later on - the idea was if the eqution we know is giving us values close or not that being resolution x 10 (10 becasue its the rate uart reads 10 bits per byte or bits per frame) / baud rate = time in my case .53 seconds were getting .57-.58 so not noticable 
                     send_start = time.time()
                 #NEXT LINE IS PAUSE PLAY REMOVING SINCE CAUSING BUGGS - PART 2 OF PAUS EPLASE 
-                    send_image_to_matrix(canvas) # callin a function to say im done with this you are all good 
+                    #send_image_to_matrix(canvas) # callin a function to say im done with this you are all good 
                     send_end = time.time()
                     print(f"[SPAN 1] send_image_to_matrix took {send_end - send_start:.3f}s")
 

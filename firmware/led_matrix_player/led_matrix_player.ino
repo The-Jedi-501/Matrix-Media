@@ -41,7 +41,7 @@ const int CH_A = 27;
 const int CH_B = 4;
 const int CH_C = 5;
 const int CH_D = 16;
-const int CH_E = -1;
+const int CH_E = 14; //-1 when  1/32 (32x64) scan panels, like 64x64px. Any available pin would do, i.e. IO32
 const int CLK = 12;
 const int LAT = 17;
 const int OE = 13;
@@ -52,9 +52,6 @@ const int OE = 13;
  attempted using "#defines" use "const int" instead 
 */
 
-// --- PIN CONFIG FOR ROTARY ENCODER (_R_E == _Rotary_Encoder)--- Purpose of encoder was to be able to switch to multiple screens --- REMOVED PART
-  //const int CLK_R_E = 35; //GPIO 35 remember thats how we refercne also pins also since GPIO 36, 39, 35, 34 ARE STRICTLY INPUT ONLY OF WHICH THEY ARE 
-  //const int DT_R_E = 34;
 // --- PIN CONFIG FOR PUSH BUTTONS (since Rotatry Encoders caused all sorts of issues design wise trying alternaiva)
   const int PB_NO_Forward = 35; // Push Button Normally Open (Starts 0) and Forward in event i want to have a seperate button for going forward vs back in terms of screens --- NOTE IN ORDER FOR THIS TO WORK MUST USE EXTERNAL 10K OHM RESISTOR TO PULL GND 
 
@@ -69,11 +66,12 @@ const int OE = 13;
 
   #include <math.h>               //need for sin and cos added after i used distance formuala could go back adn make sqrt adn pow 
 
-
+//TESTING FONTS - THIS GIVES A VERY BLOCK LIKE DESIGN THANSK LOKAKA - Works just donesnt look good but if using fonts make sure to add Fonts/
+//#include <Fonts/Org_01.h> 
 
 // MATRIX --- Configure for your panel(s) as appropriate!
   #define PANEL_WIDTH 64
-  #define PANEL_HEIGHT 32  // Panel height of 64 will required PIN_E to be defined. --- NEEEDED TO CHANGE TO MAKE WORK WITH MINE
+  #define PANEL_HEIGHT 64  // Panel height of 64 will required PIN_E to be defined. --- NEEEDED TO CHANGE TO MAKE WORK WITH MINE
   #define PANELS_NUMBER 1  // Number of chained panels, if just a single panel, obviously set to 1
   //#define PIN_E 32 //if i were to have mulitple dispalys then uncomment this, add it to pins later on and then in setup hte mxconfis uncomment the E line thats it nothing else
 
@@ -94,11 +92,18 @@ const int OE = 13;
   String incomingTag = "";  // this is where im building the "ART" as they arrive so A R T
   bool readingTag = true;   // of which needs to be truee as intially were lookign for that first song piece think im in reading a tag vs reading pixels
 
-  uint8_t imageBuffer[6144];  // unsigned 8 bit integer is - 32 x 32 = 1024 times 3 bytes value for R G B so 1024 pixels x 3 bytes each = 3072 total bytes - testing right side also so 63x32x3 is 6144
+  uint8_t imageBuffer[12288];  // unsigned 8 bit integer is - 32 x 32 = 1024 times 3 bytes value for R G B so 1024 pixels x 3 bytes each = 3072 total bytes - testing right side also so 63x32x3 is 6144
   int bytesReceived = 0;      // these are both counters to track hwo many bytes collected so far toward teh current image
   int expectedBytes = 0;      // tracking how mnay im suppose to collect in total before its complete where this one gets the 3072 the moment we see ART tag???
 
+// Matrix --- Time Screen varibales and setup --- 
 
+  String incoming_Time = "";  // this is where im building the "TIM" as they arrive so T I M 
+  bool reading_Time = false;   //This woudl need to be true as it just costantly reading it to update in time 
+
+  int Time_HH = 0;
+  int Time_MM = 0;
+  String Time_AMPM = "";
 
 // LCD --- Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
   Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);  //if i wanted anther lcd call it display_2
@@ -161,15 +166,16 @@ const int OE = 13;
 
   static const unsigned char PROGMEM image_usb_cable_connected_bits[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc0, 0x03, 0xe0, 0x04, 0xc0, 0x08, 0x04, 0xc8, 0x06, 0xff, 0xff, 0xc2, 0x06, 0x02, 0x04, 0x01, 0x30, 0x00, 0xf8, 0x00, 0x30, 0x00, 0x00, 0x00, 0x00 };
 
+  static const unsigned char PROGMEM image_clock_quarters_bits[] = {0x07,0xc0,0x19,0x30,0x21,0x08,0x40,0x04,0x41,0x04,0x81,0x02,0x81,0x02,0xe1,0x0e,0x80,0x82,0x80,0x42,0x40,0x04,0x40,0x04,0x21,0x08,0x19,0x30,0x07,0xc0,0x00,0x00};
+
 // LCD --- MATH CLASS --- Purpsoe is to essnlly be able to caluclate before hand or for now declare some essentlls
-  int X_Center = 16;  // using 64/2=32 sicne im usign the full matrix rn but 32 i but 16 is the left center but sicne its indexed at 0 therfore minus 1 ???
-  int Y_Center = 16;
+  int X_Center = 32;  // using 64/2=32 sicne im usign the full matrix rn but 32 i but 16 is the left center but sicne its indexed at 0 therfore minus 1 ???
+  int Y_Center = 32;
 
   int Hole_Ring_Radius = 2;
   int Inner_Ring_Radius = 4;
   int Art_Radius = 13;  // Radius is Distance/2 or half
   int Outer_Ring_Radius = 15; //The outer white ring essenlly was 16 adn art 15
-
 
 // ROTARY ENCODER VARIABLES NEEDED -  note this section and all encoder stuff will be based of of ex code i built
   int Current_Screen_Value = 1; //before i had a bool now the idea is hey the math says were on screen one so if else our way to find the correct screen 
@@ -190,7 +196,7 @@ const int OE = 13;
   int Counter_PB_NO_Screen_Value = 1; // Main idea is i can say hey let 1 be the main album art screeen and then from here im jsut increaming and later decremenating when i have anohter button 
   //int Counter_PB_NO = 0; //Not refereing to them as FORWARD as i need this to work with teh potentail future second button that allows me to go in reveres 
 
-  int Max_Screens_Made = 2; // This is going to be a way i just check the max screen i have and then from here ill build maths --- also not sure whihc variable group it shoudl go with 
+  int Max_Screens_Made = 3; // This is going to be a way i just check the max screen i have and then from here ill build maths --- also not sure whihc variable group it shoudl go with 
 
 //OG VERSION USED 
   //bool CD_MODE = true; //Main idea let future component jsut flip this bool exptession --- REMOVE/UNCOMMNET FOR NOW JSUT TO GET IT WORK ING 
@@ -258,7 +264,6 @@ void setup() {
   // mxconfig.mx_height = PANEL_HEIGHT;      // we have 64 pix heigh panels
   // mxconfig.chain_length = PANELS_NUMBER;  // we have 2 panels chained
   // mxconfig.gpio.e = PIN_E;                // we MUST assign pin e to some free pin on a board to drive 64 pix height panels with 1/32 scan
-  //mxconfig.driver = HUB75_I2S_CFG::FM6126A;     // in case that we use panels based on FM6126A chip, we can change that
 
 
 
@@ -270,12 +275,18 @@ void setup() {
     PANEL_WIDTH,
     PANEL_HEIGHT,
     PANELS_NUMBER,
-    _pins);
+    _pins
+    
+  );
+      //HUB75_I2S_CFG::ICN2038S    // in case that we use panels based on FM6126A chip, we can change that - WAS INICALLY IN THE STRUCT ABOVE BUT REMOVED FOR EX
+
 
   mxconfig.clkphase = false;  //From the git itslef "If you are facing issues with pixels being 'off' by 1 px to the co-ordinate requested, or experiencing ghosting, then it could be due to the 'clock phase' setting."
 
+  //mxconfig.line_decoder = HUB75_I2S_CFG::TYPE138; // ATTEMPT TO FIX THE NEW MATRIX CAUSE DIFF CHIP IDK MAN 
+  
   // Below is that same setup but for mulit matrix
-  // mxconfig.gpio.e = PIN_E;  -- remove/comment out entirely, not needed for a 32-tall panel
+//  mxconfig.gpio.e = PIN_E; // -- remove/comment out entirely, not needed for a 32-tall panel
 
   /*
     //Another way of creating config structure
@@ -445,7 +456,7 @@ void drawScreen_1( void ) {  //Numbers key: (X start, Y from bottom start, Width
   // rect 2 - Inner Part that tracks progress
   display.fillRect(6, 55, barFill, 3, 1);  //track is suppose to be emputy and vriabale starts at 0 - barfill is function vs track was real
   // music - Music Icon In the Middle - Dont do anything Yet
-  display.drawBitmap(57, 0, image_music_bits, 14, 15, 1);
+  display.drawBitmap(46, 0, image_music_bits, 14, 15, 1); //was 57 now 46
   // usb_cable_connected - USB upper left doesnt do anythign yet
   display.drawBitmap(3, 0, image_usb_cable_connected_bits, 16, 16, 1);
   // string 6 - Song: line
@@ -456,11 +467,15 @@ void drawScreen_1( void ) {  //Numbers key: (X start, Y from bottom start, Width
   display.setCursor(4, 28);  //Note the perfect placement for real song will be at x = 46
   display.print("Artist:");
   // string 9 - Later i want this to be the what screen ie vinyl or time so set a varuibak l later on
-  display.setCursor(77, 3);
+  display.setCursor(64, 3); //was x 77 now 64
   display.print("Screen: ");
-  // string 9 - Chnage this to a variubale later on so its goes trhu 1 2 3 fro media vinyl or time
-  display.setCursor(119, 3);
-  display.print(Counter_PB_NO_Screen_Value); //Current_Screen_Value USED TO TRACK SCREEN was just "1" should now actully show the value for screen 
+  // This grouped section was to clean up and better see what screen im on ex Screen : 1/3
+  display.setCursor(106, 3); // was x of 119 now 106 
+  display.print(Counter_PB_NO_Screen_Value); //Current_Screen_Value USED TO TRACK SCREEN was just "1" should now actully show the value for screen
+  display.drawLine(118, 3, 112, 9, 1); // a slash line literally just / 
+  display.setCursor(120, 3);
+  display.print( Max_Screens_Made ); 
+
   // line 10 - the line that seperate teh yellow from blue ie the change in color ~16 p
   display.drawLine(0, 15, 127, 15, 1);
   // string 10 - this will be changed to varibales in main code to be the current and end but ex rn
@@ -472,6 +487,11 @@ void drawScreen_1( void ) {  //Numbers key: (X start, Y from bottom start, Width
 
   display.setCursor(4, 43);
   display.print(timeDisplay);  //NEED TO BE VARIBALES SEE THE WEBSITE TO GET EXACT SPOTS FOR THIS STUFF
+
+  if ( Counter_PB_NO_Screen_Value == 3 ) {
+
+  display.drawBitmap(26, 0, image_clock_quarters_bits, 15, 16, 1); //CLock display icon only when in clock mode idk messin around 
+  }
 }
 
 
@@ -529,6 +549,19 @@ void Slider_Gaurd(bool &Pause_Txt, unsigned long &Hold_State_Txt, unsigned long 
   }
 }
 
+
+
+void process_Time_Matrix( String data ) {
+
+  Time_HH = data.substring(0, 2).toInt();      // "02"
+  Time_MM = data.substring(2, 4).toInt();      // "47"
+  int isPM = data.substring(4, 5).toInt();  // "1" or "0"
+  Time_AMPM = (isPM == 1) ? "PM" : "AM";
+  
+  // store into whatever variables Draw_Art_Framework will read
+}
+
+
 void Draw_Art_Framework( ) {
 
   int i = 0;
@@ -544,10 +577,19 @@ void Draw_Art_Framework( ) {
   float cosA = cos(-spinAngle);  // NEGATIVE — backward mapping, screen -> source, for postivie or negateve remeber the 4 Quadrants postive is All Students Take Calc 
   float sinA = sin(-spinAngle);
 
-  for (int y = 0; y < 32; y++) {     //Note the same nested loop from python
+  for (int y = 0; y < 64; y++) {     //Note the same nested loop from python
     for (int x = 0; x < 64; x++) {   //once again now 64 was 32 due to cheagnign stuff
 
-    if ( Counter_PB_NO_Screen_Value == 2 ){ //Logic for ifs here are essnlly make the art then when i make the white ring it cant overlap the art so its filling in the rest and the important ring thinkness is the difference form the outer and art radius adn essnlly draw from outside goin out ie middle of disk to outer 
+    if ( Counter_PB_NO_Screen_Value == 1 ) { // --- STANDARD MODE IE JUST ALBUM COVER AND > OR || ICON --- mode essnlly rn basic media player we made WE ME MADE I MADE --- Current_Screen_Value = 1
+
+          uint8_t r = imageBuffer[i++];  //Logic here we would grab the first i valeu then go thru so first iteration r=0 g=1 and b=2 so were going thru to get the 3 bytes information for color here and postfix to get the next byte info as in color
+          uint8_t g = imageBuffer[i++];  //remember unsigbned jsut means the range is from 0 to 255 since 8 bits = 1 byte = the range of colors were using in the form of the color code stuff
+          uint8_t b = imageBuffer[i++];
+
+          dma_display->drawPixelRGB888(x, y, r, g, b);  //hey at this x and y value place these colors essenlly
+        }
+
+    else if ( Counter_PB_NO_Screen_Value == 2 ){ //Logic for ifs here are essnlly make the art then when i make the white ring it cant overlap the art so its filling in the rest and the important ring thinkness is the difference form the outer and art radius adn essnlly draw from outside goin out ie middle of disk to outer 
         //yes i could use math library or jsut give the value but its seeing the math here and now 
         // WAS CD_MODE == true is now Current_Screen_Value = 2
 
@@ -594,14 +636,23 @@ void Draw_Art_Framework( ) {
             dma_display->drawPixelRGB888(x, y, 0, 0, 0); //BLK 
           }
         }
+        
+        else if ( Counter_PB_NO_Screen_Value == 3 ) {
 
-        else if ( Counter_PB_NO_Screen_Value == 1 ) { // --- STANDARD MODE IE JUST ALBUM COVER AND > OR || ICON --- mode essnlly rn basic media player we made WE ME MADE I MADE --- Current_Screen_Value = 1
+          // Runs ONCE per frame, not once per pixel
 
-          uint8_t r = imageBuffer[i++];  //Logic here we would grab the first i valeu then go thru so first iteration r=0 g=1 and b=2 so were going thru to get the 3 bytes information for color here and postfix to get the next byte info as in color
-          uint8_t g = imageBuffer[i++];  //remember unsigbned jsut means the range is from 0 to 255 since 8 bits = 1 byte = the range of colors were using in the form of the color code stuff
-          uint8_t b = imageBuffer[i++];
+          //dma_display->setFont(&Org_01); //Was messing around with fonts if using thenm just chnage teh (&) value /code to whatever font is 
+          
+          dma_display->fillScreen(0);  // clear previous frame first, else digits overlap/smear
+          dma_display->setTextColor(dma_display->color565(255, 0, 247)); //PINK because i can 
+          dma_display->setTextSize(2); //Messing around was 1 - when doing 2 its that same wicked large text need to fnd a middle goruinmd --- THinking leave it at 2 and then a mini thing for when we get to a bigger sdispaly to have am pm on seperalte lkine ans spamller 
+          dma_display->setCursor(1, 1);  // pick a real position — see below - 9,12 perfect 
 
-          dma_display->drawPixelRGB888(x, y, r, g, b);  //hey at this x and y value place these colors essenlly
+          String hourStr = (Time_HH < 10) ? ("0" + String(Time_HH)) : String(Time_HH);
+          String minStr = (Time_MM < 10) ? ("0" + String(Time_MM)) : String(Time_MM);
+          dma_display->print(hourStr + ":" + minStr + " " + Time_AMPM);
+          return;  // skip the pixel loop entirely for this screen
+
         }
       }
     }
@@ -635,7 +686,7 @@ void loop() {                       //Ardunio alwasy has this its like final sec
       if (c == ':') {
         // Tag is complete — decide what happens next based on it
         if (incomingTag == "ART") {
-          expectedBytes = 6144;  //was 3072 changing for right side check
+          expectedBytes = 12288;  //was 3072 changing for right side check
           bytesReceived = 0;
 
           //amemset(imageBuffer, 0, sizeof(imageBuffer)); // Attempting to fix ghost pause/play --- This buffer clearing being non-free, and non-free operations mattering when synchronous timing with an external, faster process is on the line
@@ -653,10 +704,16 @@ void loop() {                       //Ardunio alwasy has this its like final sec
           readingText = true;  // entering terminator-reading mode
         }
 
-        else if (incomingTag == "POS") {  //testing pos
+        else if (incomingTag == "POS") { 
           incomingPosition = "";
           readingTag = false;
           reading_POS = true;  // entering terminator-reading mode
+        }
+
+        else if (incomingTag == "TIM") {
+          incoming_Time = "";
+          readingTag = false;
+          reading_Time = true;
         }
 
         incomingTag = "";  // reset for next time so essernlly clearing that string itslef
@@ -704,6 +761,23 @@ void loop() {                       //Ardunio alwasy has this its like final sec
 
     }
 
+    else if (reading_Time) {
+      char c = Serial.read();
+      lastByteTime = millis();
+
+      if (c == '\n') {
+        // Terminator found — message is complete
+        process_Time_Matrix(incoming_Time);  // split on '|', display it --- a func call out side of all the code itslef --- change fucntion fundamentally yes it works but i need to convert and get the minutes >>> hr >>> whatever i want --- also must be dynamic liek the / in middle for logn time ie hrs
+        incoming_Time = "";                     // declared once, near the top — creates the variable, starts empty and we fill with every +c in eht else
+        reading_Time = false;                       // done with POS mode
+        readingTag = true;                         // go back to watching for the next tag
+      }
+
+      else {
+        incoming_Time += c;  // keep building the string, one character at a time
+      }
+    }
+
     else {
       // We're in "collecting pixel bytes" mode --- so when we say reading pixles true that was esenlly use saying hey were done uop there we can move unto this
       imageBuffer[bytesReceived] = Serial.read();  //reads one byte of the image itself storing into an array of which were collecintng by also byu the size of bytesReceived
@@ -721,7 +795,7 @@ void loop() {                       //Ardunio alwasy has this its like final sec
 
 
 // Safety net for not having THE VALUE OF BYTES in a given time of 5 Seconds i Believe need to check varibale values 
-  if ((readingTag == false || readingPixels == true || readingText == true || reading_POS == true || incomingTag != "") && millis() - lastByteTime > serialTimeout) {
+  if ((readingTag == false || readingPixels == true || readingText == true || reading_POS == true || reading_Time == true ||incomingTag != "") && millis() - lastByteTime > serialTimeout) {
 
     Serial.println("Serial stall detected — resetting parser state");
 
@@ -732,12 +806,14 @@ void loop() {                       //Ardunio alwasy has this its like final sec
     readingTag = true;
     readingPixels = false;
     readingText = false;
-    reading_POS = false;  //testing pos
+    reading_POS = false;  
+    reading_Time = false;
 
     // clear any partial junk sitting in the string buffers
     incomingTag = "";
     incomingText = "";
-    incomingPosition = "";  //testing pos
+    incomingPosition = "";  
+    incoming_Time = "";  
   }
 
 

@@ -6,7 +6,9 @@ A hardware/software media display system that pulls what's currently playing on 
 
 ## A Note Before You Read the Code
 
-I'm a sophomore computer engineering student (dual-majoring with EE — haven't taken EE coursework yet). This is a self-directed summer learning project that's still in progress, not a polished commercial product, and I built it specifically to *actually learn* embedded systems and hardware-adjacent engineering, not just to get something blinking.
+I'm a sophomore computer engineering student (dual-majoring with EE haven't taken EE coursework yet). This is a self-directed summer learning project that's still in progress, not a polished commercial product, and I built it specifically to *actually learn* embedded systems and hardware-adjacent engineering, not just to get something blinking. 
+
+The purpose of why I even made this besides continuing to learn as an undergraduate was to apply those lessons somewhere real, even though this project is at times more advanced than my coursework so far. Sure, I can learn data structures and basic syntax and logic in university, but the real question was: with what I'm learning, how can I apply that to something that's real and has meaning? That ranges from basic code (syntax, logic, structure), to various degrees of math, to the ability to sit down, diagnose a problem when it arises, understand why it's happening, and actually fix it and learn and build from there.
 
 That means:
 
@@ -15,25 +17,22 @@ That means:
 - Some parts of this project are still broken or unfinished (see [Known Issues](#known-issues--in-progress) below). I'm leaving that visible rather than cleaning it up cosmetically, because the debugging process is part of the point.
 - If you're a reviewer, recruiter, or fellow student: ask me about any line of this code. That's the actual goal here — not just "it works," but "I know why it works."
 
+
 ---
 
 ## What It Does
 
 A Python script on my PC reads what's currently playing (via the Windows Runtime / System Media Transport Controls APIs), grabs the album art, processes it with Pillow, and streams it over serial to an ESP32. The ESP32 drives a HUB75 RGB LED matrix and renders:
 
-- **Album art display** — synced live to whatever's playing
-- **Spinning CD animation** — backward-mapped 2D rotation with a five-zone concentric circle mask, only animating while playback is active
-- **Clock screen** — HHMMSS display, NTP-synced over WiFi
-- **Physical screen switching** — a debounced push-button cycles between display modes
+- **Album art display - Matrix** — synced live to whatever's playing
+- **Spinning CD animation - Matrix** — backward-mapped 2D rotation with a five-zone concentric circle mask, only animating while playback is active
+- **Clock screen* - Matrix* — HHMMSS display, NTP-synced over WiFi
+- **Physical screen switching - PBNO** — a debounced push-button cycles between display modes
+- **LCD Screen - INFO** - to show current screen (Screen 1/5), the current song, artist as well as a progress bar 
 
-## Why I Built This
 
-Three-project arc I set for myself this year:
-1. **This LED matrix media player** — software/firmware integration, protocol design, real-time rendering
-2. **A 10×10×10 LED cube** — the real EE challenge, next up
-3. **A speaker build** — sequenced last, after I've actually had circuits coursework
+---
 
-This project was meant to be the "software-heavy, hardware-adjacent" entry point before jumping into things that need real EE fundamentals.
 
 ## Architecture
 
@@ -65,7 +64,6 @@ Full spec lives in [`protocol.md`](./protocol.md).
 - 64×32 HUB75 RGB LED matrix (primary, currently working)
 - Waveshare 64×64 P2.5 matrix panel (see Known Issues — not stable yet)
 - SSD1306 OLED (128×64, I2C)
-- Arduino Nano, servo motors, gyro/accelerometer, shift registers — reserved for future features
 
 ## Software / Libraries
 
@@ -104,14 +102,15 @@ Matrix-Media/
 
 ## What I Learned
 
-A few things worth calling out, because they weren't obvious to me going in:
+A few things worth calling out, because they weren't obvious to me going in and made alot of the process signficantly easier:
 
 - `dir()` is genuinely useful documentation when working with undocumented WinRT objects
 - `millis()` overflow is handled correctly by unsigned subtraction — the 49-day wraparound isn't actually a problem if you don't fight the modular arithmetic
 - Fixed-width protocol tags save you from a whole category of parsing bugs
 - ESP32 GPIO 6–8 are flash pins — touching them causes boot loops; 34/35/36/39 are input-only with no internal pull resistors
 - Arduino `.ino` files *must* match their parent folder name exactly, or the IDE won't touch them
-
+- Overall anything revolving around bits and just the overall math involved and understanding serial protocol connection
+  
 ---
 
 *Built by [The-Jedi-501](https://github.com/The-Jedi-501) — feedback and questions welcome.*

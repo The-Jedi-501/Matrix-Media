@@ -4,9 +4,9 @@ A hardware/software media display system that pulls what's currently playing on 
 
 ---
 
-## ⚠️ A Note Before You Read the Code
+## A Note Before You Read the Code
 
-I'm a sophomore computer engineering student (dual-majoring with EE — haven't taken EE coursework yet). This is a self-directed summer learning project, not a polished commercial product, and I built it specifically to *actually learn* embedded systems and hardware-adjacent engineering, not just to get something blinking.
+I'm a sophomore computer engineering student (dual-majoring with EE — haven't taken EE coursework yet). This is a self-directed summer learning project that's still in progress, not a polished commercial product, and I built it specifically to *actually learn* embedded systems and hardware-adjacent engineering, not just to get something blinking.
 
 That means:
 

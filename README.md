@@ -8,11 +8,11 @@ A hardware/software media display system that pulls what's currently playing on 
 
 I'm a sophomore computer engineering student (dual-majoring with EE haven't taken EE coursework yet). This is a self-directed summer learning project that's still in progress, not a polished commercial product, and I built it specifically to *actually learn* embedded systems and hardware-adjacent engineering, not just to get something blinking. 
 
-The purpose of why I even made this besides continuing to learn as an undergraduate was to apply those lessons somewhere real, even though this project is at times more advanced than my coursework so far. Sure, I can learn data structures and basic syntax and logic in university, but the real question was: with what I'm learning, how can I apply that to something that's real and has meaning? That ranges from basic code (syntax, logic, structure), to various degrees of math, to the ability to sit down, diagnose a problem when it arises, understand why it's happening, and actually fix it and learn and build from there.
+The purpose of why I even made this besides continuing to learn as an undergraduate was to apply those lessons somewhere real, even though this project is at times more advanced than my coursework so far. Sure, I can learn data structures and basic syntax and logic in university, but the real question was: with what I'm learning, how can I apply that to something that's real and has meaning? That ranges from basic code (syntax, logic, structure), to various degrees of math, to the ability to sit down, diagnose a problem when it arises, understand why it's happening, and actually fix it and learn and build from there. It was also about pushing myself into different environments: learning and understanding Python when I started out coding in C, figuring out how this hardware actually works, and picking up the tools needed to understand all of it.
 
 That means:
 
-- I used **Google, Claude, YouTube tutorials, and a bunch of forum threads** while building this. I don't think that's something to hide it's how I learned. But I made it a rule for myself to never copy-paste something I couldn't explain, nor just blindly accept the answer. If I can't walk you through *why* a piece of code does what it does, it doesn't go in. Yea sure I dont expect to remember all the hundreds of lines of code between two seperate languages but
+- I used **Google, Claude, YouTube tutorials, and a bunch of forum threads** while building this. I don't think that's something to hide it's how I learned. But I made it a rule for myself to never copy-paste something I couldn't explain, nor just blindly accept the answer. If I can't walk you through *why* a piece of code does what it does, it doesn't go in. Yeah, sure, I don't expect to remember every single line of code across two separate languages but I should always be able to explain the reasoning behind it.
 - You'll find **heavily-commented "Notes" versions** of some files alongside the production code. Those aren't clutter they're my own learning trail, kept on purpose so I (or anyone else) can see the reasoning, not just the result.
 - Some parts of this project are still broken or unfinished (see [Known Issues](#known-issues--in-progress) below). I'm leaving that visible rather than cleaning it up cosmetically, because the debugging process is part of the point.
 - If you're a reviewer, recruiter, or fellow student: ask me about any line of this code. That's the actual goal here not just "it works," but "I know why it works."
@@ -28,7 +28,7 @@ A Python script on my PC reads what's currently playing (via the Windows Runtime
 - **Spinning CD animation - Matrix** — backward-mapped 2D rotation with a five-zone concentric circle mask, only animating while playback is active
 - **Clock screen* - Matrix* — HH : MM AM/PM display
 - **Physical screen switching - PBNO** — a debounced push-button cycles between display modes
-- **LCD Screen - INFO** - to show current screen (Screen 1/5), the current song, artist as well as a progress bar 
+- **LCD Screen - INFO** - show current screen (Screen 1/5), the current song, artist as well as a progress bar 
 
 
 ---
@@ -70,6 +70,8 @@ Full spec lives in [`protocol.md`](./protocol.md).
 
 - **Firmware:** Arduino C++, [ESP32-HUB75-MatrixPanel-I2S-DMA](https://github.com/mrfaptastic/ESP32-HUB75-MatrixPanel-I2S-DMA)
 - **PC client:** Python, `winsdk` (WinRT bindings), Pillow, `pyserial`
+  
+- Whilst not on the same level just somethign neat to get all text for matrix and lcd [Off Site tool](https://lopaka.app/editor/49770/100785)
 
 ## Repo Structure
 
@@ -91,14 +93,10 @@ Matrix-Media/
 
 ## Roadmap
 
-- [] Upscaling to a 64x64 and troubleshooting 
-- [ ] Integrate clock screen into main firmware
-- [ ] Static background image screen (local file, reusing the `ART:` pipeline)
-- [ ] 74HC595 shift register for LED mode indicators
-- [ ] Song progress bar (`BAR:` tag, SMTC timeline data)
-- [ ] Volume display via `pycaw`
-- [ ] Gesture control (MediaPipe + `pyautogui`)
-- [ ] WiFi, then Bluetooth/BLE transport
+- [ ] Upscale to a 64×64 panel and troubleshoot from there
+- [ ] Add a smaller secondary matrix to display some kind of visualizer while a song is playing
+- [ ] Explore displaying something like the Steam taskbar icon on the matrix, just as a fun extra
+- [ ] Figure out what a Bluetooth version of this project would look like
 
 **Deferred to a later phase:** Raspberry Pi migration, 3D-printed enclosure, second matrix chaining.
 
@@ -111,7 +109,7 @@ A few things worth calling out, because they weren't obvious to me going in and 
 - Fixed-width protocol tags save you from a whole category of parsing bugs
 - ESP32 GPIO 6–8 are flash pins — touching them causes boot loops; 34/35/36/39 are input-only with no internal pull resistors
 - Arduino `.ino` files *must* match their parent folder name exactly, or the IDE won't touch them
-- Overall anything revolving around bits and just the overall math involved and understanding serial protocol connection
+- Just about anything involving bits, the math behind them, and understanding how serial protocol connections actually work
   
 ---
 

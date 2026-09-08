@@ -12,10 +12,10 @@ The purpose of why I even made this besides continuing to learn as an undergradu
 
 That means:
 
-- I used **Google, Claude, YouTube tutorials, and a bunch of forum threads** while building this. I don't think that's something to hide — it's how I learned. But I made it a rule for myself to never copy-paste something I couldn't explain. If I can't walk you through *why* a piece of code does what it does, it doesn't go in.
-- You'll find **heavily-commented "Notes" versions** of some files alongside the production code. Those aren't clutter — they're my own learning trail, kept on purpose so I (or anyone else) can see the reasoning, not just the result.
+- I used **Google, Claude, YouTube tutorials, and a bunch of forum threads** while building this. I don't think that's something to hide it's how I learned. But I made it a rule for myself to never copy-paste something I couldn't explain, nor just blindly accept the answer. If I can't walk you through *why* a piece of code does what it does, it doesn't go in. Yea sure I dont expect to remember all the hundreds of lines of code between two seperate languages but
+- You'll find **heavily-commented "Notes" versions** of some files alongside the production code. Those aren't clutter they're my own learning trail, kept on purpose so I (or anyone else) can see the reasoning, not just the result.
 - Some parts of this project are still broken or unfinished (see [Known Issues](#known-issues--in-progress) below). I'm leaving that visible rather than cleaning it up cosmetically, because the debugging process is part of the point.
-- If you're a reviewer, recruiter, or fellow student: ask me about any line of this code. That's the actual goal here — not just "it works," but "I know why it works."
+- If you're a reviewer, recruiter, or fellow student: ask me about any line of this code. That's the actual goal here not just "it works," but "I know why it works."
 
 
 ---
@@ -26,7 +26,7 @@ A Python script on my PC reads what's currently playing (via the Windows Runtime
 
 - **Album art display - Matrix** — synced live to whatever's playing
 - **Spinning CD animation - Matrix** — backward-mapped 2D rotation with a five-zone concentric circle mask, only animating while playback is active
-- **Clock screen* - Matrix* — HHMMSS display, NTP-synced over WiFi
+- **Clock screen* - Matrix* — HH : MM AM/PM display
 - **Physical screen switching - PBNO** — a debounced push-button cycles between display modes
 - **LCD Screen - INFO** - to show current screen (Screen 1/5), the current song, artist as well as a progress bar 
 
@@ -54,7 +54,7 @@ A custom tag-based serial protocol, designed on purpose to avoid delimiter-colli
 
 - Fixed-length binary framing for pixel data (3,072 bytes per frame)
 - Terminator-based framing for text tags
-- Lesson learned the hard way: a `POS:` tag using raw timedelta strings broke the parser because the colons in `HH:MM:SS` collided with the tag's own delimiter. Fix is documented in `protocol.md` (currently deferred, not yet patched).
+- Lesson learned the hard way: a `POS:` tag using raw timedelta strings broke the parser because the colons in `HH:MM` collided with the tag's own delimiter. Fix is documented in `protocol.md` (currently deferred, not yet patched).
 
 Full spec lives in [`protocol.md`](./protocol.md).
 
@@ -64,6 +64,7 @@ Full spec lives in [`protocol.md`](./protocol.md).
 - 64×32 HUB75 RGB LED matrix (primary, currently working)
 - Waveshare 64×64 P2.5 matrix panel (see Known Issues — not stable yet)
 - SSD1306 OLED (128×64, I2C)
+- Push Button Normally Open pulled down (Defealt to 0 for code as needed to use INPUT only pin ran out of pins on ESP) via a 10k Ohm resistor
 
 ## Software / Libraries
 
@@ -86,10 +87,11 @@ Matrix-Media/
 - **Waveshare 64×64 panel**: two of four horizontal bands render dark/wrong despite correct E-pin wiring and multiple driver/scan config attempts. Draft GitHub issue prepared for the library maintainer. Currently running the demo on the old 32-tall panel instead.
 - **Old 32-tall panel**: developed a stuck-green bottom half, likely from physical disturbance of the G2 line during connector handling.
 - **`pc-client/` cleanup**: a few loose scratch files (`Notes.py`, `IDK.py`, etc.) still need to be folded in or removed.
-- **`POS:` tag desync**: known parser bug from colons in timedelta strings — root cause identified, fix not yet applied.
+- **`POS:` tag desync**: known parser bug from colons in timedelta strings root cause identified, fix not yet applied.
 
 ## Roadmap
 
+- [] Upscaling to a 64x64 and troubleshooting 
 - [ ] Integrate clock screen into main firmware
 - [ ] Static background image screen (local file, reusing the `ART:` pipeline)
 - [ ] 74HC595 shift register for LED mode indicators

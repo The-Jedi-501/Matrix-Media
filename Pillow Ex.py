@@ -36,4 +36,4 @@ for y in range(64):        # rows (height)
 # canvas = Image.new("RGB", (64, 32), (0, 0, 0)) #So this tells us to set the matrix to all blank via turning all the led to black 
 # canvas.paste(img_square, (0, 0))  # flush against left edge, flush against top --- Then we are saying to paste this starting at 0 0 note img_square in this case woudl jsut be img_small diff varibale casue its a code ex so the number its going off of is from the img.resize () value 
 
-# canvas.show()        
+#canvas.show()        
